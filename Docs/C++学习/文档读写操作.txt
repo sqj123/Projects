@@ -1,26 +1,26 @@
-1��CFile ��д�ĵ�
+1、CFile 读写文档
 
-2��CArchive ��д
+2、CArchive 读写
       CArchive ar(&file,CArchive::store);
       ar << m_list.GetItemCount();
-      ��ѭ��д������
+      再循环写入数据
       ar << atoi(m_List.GetItemText(i,0));
-      ar << atoi(ͬ��)��
-      ar <<  �������͵����ݣ�//д��
+      ar << atoi(同上)；
+      ar <<  各种类型的数据；//写入
 
-      ���ݴ����count����ѭ����ȡ
+      根据存入的count进行循环读取
       CArchive ar(&file,CArchive::store);        
 
 
 
-    ע�⣬��˳��д�룬��Ҫ��˳���ȡ  ��CFile ��Ҫ���ĵ�����     
-3��CDocument 
-      CDocument �����޸�״̬���Լ��ж��޸�״  ̬
-      SetModifyFlag��TRUE/FALSE��;//����� ����Ҫ�ֶ�����
+    注意，按顺序写入，就要按顺序读取  ，CFile 还要打开文档操作     
+3、CDocument 
+      CDocument 中有修改状态，以及判断修改状  态
+      SetModifyFlag（TRUE/FALSE）;//保存后 不需要手动调用
       IsModifyed    
-      CDocument::Serialize(CArchive &ar)���������������дʵ��
-      ���������еĵ�ǰ�����п�����
-             AfxGetMainWnd����->Serialize(ar);
-      ͨ����������Ե��û���ʱ���Զ��ص������ຯ����
-      ���ָ��ָ��Ķ���Ĺ�����Դ��˭����Ķ���͵���˭���麯��
-      
+      CDocument::Serialize(CArchive &ar)函数，派生类可重写实现
+      在派生类中的当前函数中可增加
+             AfxGetMainWnd（）->Serialize(ar);
+      通过这句代码可以调用基类时会自动回调派生类函数，
+      检测指针指向的对象的构造来源，谁构造的对象就调用谁的虚函数
+4、其他内容还在学习中...
