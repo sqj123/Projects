@@ -1,0 +1,531 @@
+mfc 弹出窗口
+
+1、模式、非模式
+ 	CDialog dlg(对话框ID);
+	int ret = dlg.DoModal();//弹出窗口
+	if(ret == IDOK)
+	{}
+	else if(ret == IDCANCEL)
+	{}
+ 
+  非模式对话框   代码如：
+  CDialog* dlg = new CDialog；
+  dlg->Create(dialogID,[GetDeskTopWindow()]);//第二个参数如缺省，就不会在任务栏上显示，如果不是，就会以桌面为父窗口，就可以显示。
+  dlg->ShowWindow(SW_SHOW);
+
+     
+ 关闭对话框   EndDialog(IDOK\IDCANCEL)
+  非模式对话框执行EndDialog后不会关闭对话框，需要执行DestroyWindow彻底关闭
+
+  注意：
+   a、 如果非模态窗口，作为成员变量，执行真、关闭后，在窗口需要有一下代码：
+    if(!m_dlg.m_hWnd) 或 （!m_dlg）
+          m_dlg.Create(IDD_***,[GetDeskTopWindow()]);
+    m_dlg.ShowWindow(SW_SHOW);
+
+   b、GetSafeHwnd();判断指针是否存在，可以避免指针不存在就崩溃
+    如：
+      CWnd* pWnd=GetDlgItem(IDC_***);
+      HWND hwnd1=pWnd->GetSafeHwnd();
+      if(hwnd1)
+          pWnd->DestroyWindow();
+
+    c、通过句柄获取对象指针
+     如：
+        HWnd hWnd = ::GetDlgItem(m_hWnd,IDOK);    
+        CWnd* p=CWnd::FromHandle(hWnd);//临时指针
+        p->SetWindowText();//有了对象指针就可以设置其属性
+ 
+     d、在对话框类中基类中有两处
+    
+2、代码创建控件
+   
+   在***.h 类声明中增加
+   
+   CWnd m_wnd,m_wndBtn,...;//可以是多个
+
+   在public：中增加
+    enum{IDC_***=1008,IDC_***,...};//设置控件的ID
+
+   在***.cpp 中的指定消息处理中增加：
+
+   m_wnd.Create("","",WS_CHILD|WS_VISIBLE,CRect(1,1,1,1),this,IDC_***);
+
+
+
+2、SetWindowText(strTitle) //设置当前窗口标题
+
+3、 HICON hIcon = LoadIcon(AfxGetInstanceHandle(),(LPCSTR)IDI_ICON1);
+    SetIcon(hIcon,FALSE);//设置窗口图标
+
+4、CString str;
+   str.Format("",para1,...)
+   随后可以使用str
+   strlwr(str)  //转成小写
+5、OnPaint()函数中加入绘画代码
+   CPaintDC dc(this)
+   dc.Ellipse(x1,y1,x2,y2);//在窗口上画矩形
+
+6、在鼠标（按下、弹起、移动）事件中可用到
+    MK_CONTROL   MK_SHIFT   MK_LBUTTON  MK_RBUTTON  
+    
+    if(MK_CONTROL & nFlags) //按下ctrl键
+    {}
+    else if(MK_SHIFT & nFlags) //按下shift键
+    {}
+
+7、新增窗口后通过类向导添加窗口对应的代码类，在运行时可能会报错，需要调用的类文件上面加入#include新添的类名+“.h”
+
+8、GetDlgItemText(控件ID,strValue);//获取对话框中控件中的字符串值
+   SetDlgItemText(控件ID，strValue);//设置对话框中控件的文本
+
+   GetDlgItemInt()、SetDlgItemInt()
+   GetDlgCtrlId()、SetDlgCtrlId() //获取设置窗口的id
+   GetDlgItem(ID)
+
+   IsParent   IsChild   是否是父、子窗口
+
+   FindWindow()  获取当前窗口的指定的子窗口
+
+   GetWindow()
+
+ 9 、 AfxMessageBox("提示信息",MB_YESNO); //弹出提示窗口
+
+10、设置窗口中文本框的焦点 
+    GetDlgItem(控件ID)->SetFocus();
+   
+11、模拟事件处理函数 SendMeassge(控件ID,MK_LBUTTON|MK_CONCTROL,OX12345678)，其中1234 为坐标中的x，5678为坐标中的y
+    该函数放置某个控件的指定事件中  
+
+    等于调用了OnLButtonDown的事件函数；
+
+12、CWnd* p = FindWindow(NULL,"无标题 - 记事本")；
+    p->SendMessage(WN_CLOSE,0,0);对已打开的记事本进行关闭  阻塞式的
+       PostMessage()   //非阻塞式   跨线程
+    判断指定是否为空   if(p) 即可
+
+13、窗口操作
+    ShowWindow(SW_HIDE/SW_SHOW) 参数以SW_开头的用户定义的常量
+    EnableWindow     MoveWindow    CenterWindow    SetWindowPos
+    
+    判断状态
+    CWnd* cwnd=GetDlgItem(IDC_***);
+    if(cwnd->IsVisible())
+        cwnd->SetWindow(SW_HIDE);
+    else
+        cwnd->SetWindow(SW_SHOW);
+
+    
+14、等价关系
+    IsChild ==  GetParent
+    IsIconic  == GetStyle() & WS_MINMIZE   //最小化
+    IsZoomed == GetStyle() & WS_MAXMIZE    //最大化
+    IsWindowVisible  == GetStyle() && WS_VISIBLE
+    ...
+
+15、计时器
+    SetTimer（ ） 对应OnTimer消息   KillTimer(ID);
+ 
+    GetWindowRect(&rect);//获取屏幕坐标
+    SceenToClient(rect);//屏幕坐标系转换客户区坐标系    
+    rect.OffsetRect(x,y);
+
+    GetClientRect(&rect);//获取客户区坐标
+    
+    rect.OffsetRect(x,y);//设置偏移
+    
+    m_btn.MoveWindow(rect);//移动控件对象的位置
+
+    invalidate();//更新工作区
+
+   CWnd* cwnd =  GetTopWindow() //工作区中子窗口中最top的窗口指针
+    BringWindowToTop（） //在工作区的子窗口推到前台
+    SetForeGroundWindow（）//对于任务栏中的一个主window推到前台
+
+    CWnd* cwnd=GetActiveWindow();
+    if(cwnd)
+    {
+        CString str;
+        cwnd->GetWindowText(str);
+        SetWindowText(str);
+    }
+    以上代码实现获取当前进程中的激活窗口的指针，设置窗口的标题文本。 
+14、获取控件的文本内容
+       GetDlgItemText(控件ID，字符串变量，sizeof（字符串变量）)
+       GetDlgITemText(IDC_***,str);
+
+      SetDlgItemID() 
+      GetDlgItmeID()
+
+      GetParent()   获取当前cwnd对象的父窗口对象指针
+      IsChild()
+17、Afx开头的mfc全局函数
+
+
+    AfxGetApp() //获取theApp对象指针
+    AfxGetInstanceHandle()  //获取句柄
+    AfxGetAppName() //获取app的名称
+    AfxGetMainWnd
+   
+    CWinApp类获取或设置profile配置文件中的内容
+    如果在***App::InitInstance()中SetRegistryKey("***");
+    GetProfileString()/WriteProfileString
+    GetProfileInt() / WriteProfileInt（）
+    则配置的数据就会存入注册表中，在HKEY_CURRENT_USER\SOFTWARE\***\
+
+    ***.ini 文件放在哪里？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？
+18、CFile file   文件操作类
+    打开方式：
+    其一：
+    if(!file.Open("文件路径",CFile::modeCreate |CFile::modeRead| CFile::modeWrite))
+     {return FALSE;}
+    
+    其二：
+    CFile file;
+    file.open("文件路径",CFile::modeCreate);
+    if(-1==file.m_hfile)
+          return FALSE;
+     
+    CFile::modeCreate 
+            ::modeRead
+            ::modeWrite
+            ::shareDenyNone  分享
+    file.Write(结构体或对象地址,sizeof(结构体或对象地址))； 
+   
+    file.Read(结构体或对象地址,sizeof(结构体或对象地址));
+    file.Close();//和open 成对使用 
+   
+    mfc软件中增加全局变量，可以在theApp类声明中进行定义一个成员变量 
+19、extern ***APP theApp，转载全局变量，用于其他窗口实现类中，放置类头部    
+      
+20、父子窗口交互，在可以在子窗口中声明父窗口的指针，就可以对父窗口中的控件中设置或更新数据  
+
+21、移动控件焦点  CDialog::NextDlgCtrl()
+
+22、类型转换   atof()
+               COleDateTime.ParseDateTime（）
+23、ComboBox   GetLBText(selectedIndex,&str);获取下拉框的选中项内容
+               GetWindowText(str)//同上
+
+24、控件型成员变量添加的三种方式
+      在***.h类中添加 CListCtrl m_list;
+
+      在***.cpp类中的初始化对话框函数中对该成员变量进行赋值；
+
+      1、Attach（） 、 detach（） 或
+         SubclassWindow（）、unSubclassWindow()
+         HWND * hList;
+         GetDlgItem(IDC_LIST,&hList);
+         m_list.Attach(hList);
+      或 m_list.SubclassWindow(hList);  
+         在Destory函数中调用m_list.Detach() 或 m_list.UnSubclassWindow();
+               
+      2、m_list.SubclassDlgItem(IDC_LIST1,this);  // 推荐使用
+    
+      3、通过类向导，添加成员变量，选择变量类型
+
+      m_list.GetStyle()/GetExStyle();
+     //设置扩展风格，全行选中，增加表格线
+      m_list.SetExtendedStyle(LVS_EX_FULLROWSELECT| LVS_EX_GRIDLINES);
+      m_list.ModifyStyle()/ModifyExStyle;//设置基础风格/扩展风格
+      m_list.ModifyStyle(0, LVS_REPORT);
+       列表在数据行加入图片，CImageList m_iList;
+                 m_iList.Create(5,28,ILC_COLOR32|ILC_MASK,1,1);//可以定义图片列表元素个数，和动态添加的个数
+	m_iList.Add(AfxGetApp()->LoadIconW(IDI_ICON1));
+	m_list.SetImageList(&m_iList,LVSIL_SMALL);
+      在插入时
+              m_list.insertItem(rowcount,0,“文本内容”,0);//0为图片列表的索引 
+      在事件消息中，更新控件，InValidate();
+
+      CRect rect;
+      ScreenToClient(rect);//屏幕坐标系转窗口工作区坐标系
+      rect.InflateRect()//向外扩展
+25、 
+     UpdateData（TRUE）;数据从界面上关联到成员变量中
+     UpdateData(FLASE)   
+     缺点：会对该类的所有控件型成员变量全部输入，不能单独更新
+
+26、 COleDateTime 、CTime 推荐使用COleDateTime，8个字节，doubble类型
+        ParseDateTime("2017年6月28日",VAR_DATEVALUEONLY)//字符串转日期型 
+27、CImageList 使用：
+    1、声明成员变量
+    2、在对话框的初始化函数中m_iList.Create(16,16,ILC_)
+    3、添加图标
+    4、m_List.Insert(0,str,int ICON);
+28、CListCtrl的使用
+       CListCtrl * pList=(ClistCtrl*)GetDlgItem(IDC_***);
+       //插入一行数据
+       pList->InsertItem(0,"内容");
+       pList->SetItemText(0,1,"内容");
+       pList->SetItemInt(0,2,数值);
+       获取选中数据行
+       Position p= pList->GetFirstSelectedItemPosition();
+       int selectedIndex = pList->GetNextSelectedItem(p); 
+       if(selectedIndex<0){return ;}
+       //获取选中行第一列的文本
+       CString str = pList->GetItemText(selectedIndex,0);
+
+
+29、设置CListCtrol 数据行的背景、文本颜色
+    添加CListCtrol 的NM_CUSTOMDRAW 消息
+    代码如下：
+     LPNMLVCUSTOMDRAW pLVCD = reinterpret_cast<LPNMLVCUSTOMDRAW>(pNMHDR);  
+    *pResult = CDRF_DODEFAULT;  
+ 
+   // First thing - check the draw stage. If it's the control's pre-paint stage,    
+   // then tell Windows we want messages for every item.   
+    if ( CDDS_PREPAINT == pLVCD->nmcd.dwDrawStage )  
+    {  
+        *pResult = CDRF_NOTIFYITEMDRAW;  
+    }  
+    else if ( CDDS_ITEMPREPAINT == pLVCD->nmcd.dwDrawStage )  
+    {  
+        // This is the notification message for an item.    
+         //处理，将item改变背景颜色   
+           int nItem = static_cast<int>(pLVCD->nmcd.dwItemSpec);
+
+            if(nItem==1) 
+           {
+	pLVCD->clrTextBk = RGB(0,255,0);
+                pLVCD->clrText = RGB(255,0,255);  
+           }
+           *pResult = CDRF_DODEFAULT;  
+    }  
+    
+30、对话框之间的控件对象联系
+       a、单个对话框中可以将使用频繁的控件对象作为成员变量声明，例如：
+             ***.h 类中增加 CListCtrl pList;
+             ***.cpp 中InitDialog函数中增加 pList.SubclassDlgItem(IDC_***,this);
+            之后在对话框的实现函数中可以随意使用该成员变量
+       b、两个对话框之间的数据传递和更新
+            在第一个对话框的消息处理函数（如onOK）中需要弹出第二个窗口，如下：
+            第二个对话框的***.h类声明中增加CFirstDlg *  m_firstDlg
+            在第一个对话框的消息处理函数中，代码如下
+            CDialog dlg;
+            dlg.m_firstDlg=this;//this就是当前第一个对话框的对象指针
+            dlg.DoModal();
+     
+            注意：CListCtrl & list=m_firstDlg->m_list;//可以声明变量，减少代码量
+
+31、控件使用
+       a、CDateTimeCtrl
+            CDateTimeCtrl * pDate=(CDateTimeCtrl *)GetDlgItem(IDC_***);
+            CTime time(2017,6,27,0,0,0);
+            pDate->SetTime(&time);//初始化时间选择控件
+ 
+       b、在控件上点击回车键，进入下个控件，直到IDOK按钮获取焦点
+             if(GetFocus() != GetDlgItem(IDOK))
+             {
+                CDialog::NextDlgCtrl();
+                return;
+             }
+       c、CFileDialog
+            CFileDialog fileDlg(TRUE/FALSE); TRUE为打开选择一个文件，FALSE为另存为
+            构造函数中缺省的参数说明：
+            1、bOpenFileDialog:TRUE\FALSE;  打开或保存
+            2、lpszDefExt:
+            3、lpszFileName:  
+            //文件另存为
+            CFileDialog fileDlg(FALSE);
+            if(IDCANCEL==fileDlg.DoModal())
+            {return;}
+             CString filename;
+             filename=fileDlg.GetPathName();
+             CFile file;
+             if(!file.Open(filename,CFile::modeCreate|CFile::modeWrite))
+              {return;}
+
+              sInfo info;//结构体
+              file.Write(&info,sizeof(info));
+
+               file.Close();
+               /////////////////////////////////////////////
+              CFileDialog fileDlg(TRUE);
+            if(IDCANCEL==fileDlg.DoModal())
+            {return;}
+             CString filename;
+             filename=fileDlg.GetPathName();
+             if(!file.Open(filename,CFile::modeRead|CFile::shareDenyNone))
+              {return;}
+             CFileStatus stat;
+             file.GetStatus(stat); //stat中存有三个时间（创建、修改、最后访问时间）、文件大小、文件名称             
+              char* pText=new char[stat.m_size+1];
+              int nRet=file.Read(pText,stat.m_size);
+              pText[nRet]=0;//数组最后一个字节以0结尾
+              或
+              sInfo info;//结构体
+              file.Read(&info,sizeof(info));
+              循环读取数据的话可用以下代码进行判断
+              while（file.Read(&info,sizeof(info))==sizeof(info)）
+               {
+                   i++;
+               }
+               file.Close();
+
+          d、CColorDialog颜色对话框
+              CColorDialog cDlg;
+              cDlg.DoModal();
+              COLORREF color=cDlg.GetColor();
+
+              theApp.SetDialogBkColor()//不再支持 已解决，可参考36项
+           
+           e、CFontDialog字体对话框
+              CFontDialog cDlg;
+              cDlg.DoModal();
+              
+              LOGFONT lf;
+              cDlg.GetCurrentFont(&lf);
+              CFont font;    
+              font.CreateFontIndirect(&lf);
+              m_edit.SetFont(&font);
+              设置文本框内容字体风格，如果不起作用，需要增加CFont的存在时间，把CFont声明成对话框的成员变量中。
+
+         注意：如果某类构造函数含有一个参数的，语法可以这样写：
+                    CColorDialog dlg=RGB（0,0,0）;
+                    
+32、CString类
+       CString 和char[] 相互转换 已解决，可参考 第35项
+
+33、如果工程项目属性中的字符集为Unicode字符集
+       所有函数中参数用""直接赋值的需要用_T(""),避免编译报错
+
+34、自定义配置文件
+       config.ini
+       配置节点如：
+      [Server]
+      ipAddress=192.168.1.110
+      dbName=PWNT
+      dbUser=sa
+      dbPwd=123456
+
+      读写操作代码如下：
+     CString m_filePath("./Config.ini");
+     ::WritePrivateProfileString(_T("Server"),_T("ipAddress"),_T("192.168.1.110"),m_filePath);
+     ::WritePrivateProfileString(_T("Server"),_T("dbName"),_T("PWNT"),m_filePath);
+     ::WritePrivateProfileString(_T("Server"),_T("dbUser"),_T("sa"),m_filePath);
+     ::WritePrivateProfileString(_T("Server"),_T("dbPwd"),_T("123456"),m_filePath);
+    读操作：
+    CString szValue;
+
+   ::GetPrivateProfileString(_T("Server"),_T("ipAddress"),_T("111"),szValue.GetBuffer(MAX_PATH),MAX_PATH,m_filePath);
+   SetDlgItemText(IDC_IPADDRESS,szValue);
+
+   ::GetPrivateProfileString(_T("Server"),_T("dbName"),_T("111"),szValue.GetBuffer(MAX_PATH),MAX_PATH,m_filePath);
+    SetDlgItemText(IDC_DBNAME,szValue);
+
+    ::GetPrivateProfileString(_T("Server"),_T("dbUser"),_T("111"),szValue.GetBuffer(MAX_PATH),MAX_PATH,m_filePath);
+    SetDlgItemText(IDC_DBUSER,szValue);
+
+    ::GetPrivateProfileString(_T("Server"),_T("dbPwd"),_T("111"),szValue.GetBuffer(MAX_PATH),MAX_PATH,m_filePath);
+    SetDlgItemText(IDC_DBPWD,szValue);
+35、CString、String、char*之间的转换
+	1. string to CString   
+
+  	CString.format("%s",string.c_str()); 
+
+	2. CString to string
+
+	string str(CString.GetBuffer(str.GetLength()));
+
+	3. string to char *
+
+	char *p=string.c_str();
+
+	4. char * to string
+
+	string str(char*);
+
+	5. CString to char *
+
+	strcpy(char,CString,sizeof(char));
+
+	6. char * to CString
+
+	CString.format("%s",char*);
+
+ 	CString的format方法是非常好用的。string的c_str()也是非常常用的，但要注意和char *转换时，要把char定义成为const char*，这样是最安全的。
+ 
+	以上函数UNICODE编码也没问题：unicode下照用，加个_T()宏就行了,像这样子_T("%s")
+
+36、设置控件的颜色、字体，需要增加CtlColor消息处理
+        代码如下：
+       switch (pWnd->GetDlgCtrlID())
+    {
+		//针对ID为IDC_CTL1, IDC_CTL2和IDC_CTL3的控件进行同样的设置
+		case IDC_IPADDRESS:
+		case IDC_DBNAME:
+		case IDC_DBUSER:
+		case IDC_DBPWD:
+		{
+			pDC->SetBkMode(TRANSPARENT);
+			pDC->SetTextColor(RGB(255,255, 0));
+			HBRUSH B = CreateSolidBrush(RGB(125,125,255));
+			return B;
+		}
+		default:
+			return hbr;
+    }
+
+37、char*、char[]、string 互转
+        一、string转char*。
+
+　　主要有三种方法可以将str转换为char*类型，分别是：data(); c_str(); copy();
+
+　　1.data()方法，如：
+
+1 string str = "hello";
+2 const char* p = str.data();//加const  或者用char * p=(char*)str.data();的形式
+　　同时有一点需要说明，这里在devc++中编译需要添加const，否则会报错invalid conversion from const char*  to char *，这里可以再前面加上const或者在等号后面给强制转化成char*的类型。
+
+　　下面解释下该问题，const char*是不能直接赋值到char*的,这样编译都不能通过,理由:假如可以的话,那么通过char*就可以修改const char指向的内容了,这是不允许的。所以char*要另外开辟新的空间，即上面的形式。
+
+　　2.c_str()方法，如：
+
+1 string str=“world”;
+2 const char *p = str.c_str();//同上，要加const或者等号右边用char*
+　　3.copy()方法，如：
+
+1 string str="hmmm";
+2 char p[50];
+3 str.copy(p, 5, 0);//这里5代表复制几个字符，0代表复制的位置，
+4 *(p+5)=‘\0’;//注意手动加结束符！！！
+ 
+
+　　二、char * 转string。
+
+　　可以直接赋值。
+
+1 string s;
+2 char *p = "hello";//直接赋值
+3 s = p;
+　　这里有一点要说明，当声明了string类型变量s后，用printf("%s",s);是会出错的，因为“%s”要求后面的对象的首地址。但是string不是这样的一个类型。所以肯定出错。
+
+ 
+
+　　三、string转char[]
+
+　　这个由于我们知道string的长度，可以根据length()函数得到，又可以根据下标直接访问，所以用一个循环就可以赋值了。
+
+复制代码
+1     string pp = "dagah";
+2     char p[8];
+3     int i;
+4     for( i=0;i<pp.length();i++)
+5         p[i] = pp[i];
+6     p[i] = '\0';
+7     printf("%s\n",p);
+8     cout<<p;
+复制代码
+　　四、char[]转string
+
+　　这里可以直接赋值。
+        
+
+
+
+
+
+
+
+
+

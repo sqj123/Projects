@@ -1,0 +1,75 @@
+1、UDP
+     a、发送出去的数据报文可能丢失，尤其在互联网中丢失率较高；
+     b、一般不分客户端和服务器，例如飞鸽传书和飞秋等局域网的通讯软件；
+     c、udp是无连接通讯，直接指定IP地址和端口，随时可以朝向任何主机和端口发送数据；
+2、TCP 
+     a、是稳定传输，发送过程一般没有数据丢失，除非网络断开；
+     b、开发框架比udp复杂的多，必须依据c/s架构基础进行开发，一般tcp通讯软件都分为服务端和客户端两部分；
+     c、服务器端有1个侦听Socket和多个用于应答Socket组成，每个应答Socket与客户端建立一对一的数据流通道；
+     d、客户端只包含一个Socket，他在成功连接服务器后与某一个应答Socket进行一对一的数据通讯。
+    使用Socket类，就需要在C***App：：InitInstance中增加代码
+    AfxSocketInit（）;初始话socket 
+    server端：
+    在对话框中的initDialog中增加
+    if(!m_sock.Create(8881))
+    {
+             int nError=GetLastError();
+             AfxMessageBox("创建网络失败！");
+    }
+    m_sock.Listen(); 
+
+    在侦听Socket中的   
+    OnAccept(int nErrorCode)
+    {
+        CSocket::OnAccept(nErrorCode);
+        CSockC * p=new CSoketC;
+        Accept(*p);
+        CString szIP;
+        UINT nPort;
+        p->GetPeerName(szIP,nPort) ;//获取客户端的IP和端口
+        CSDlg* pDlg=（CSDlg*）AfxGetMainWnd();
+        pDlg->OnAccept(szIP,nPort);
+    }
+    在应答Socket的OnReceive（int nErrorCode）代码如下：
+    char s[2048];
+    CString szIP;UINT nPort;
+    int nLen=Receive(s,sizeof(s));
+    s[nLen]=0;//数组中最后一个元素赋值0，作为结束字符；
+    GetPeerName（szIP,nPort）;
+    CSDlg* pDlg =(CSDlg*)AfxGetMainWnd（）;
+    pDlg->OnReceive(s,szIP,nPort);  //在对话框类增加这个函数，将接受到的数据显示到窗口上
+    CSoket::OnReceive(nErroeCode); 
+
+
+    客户端对话框的initdialog中增加
+    if(!m_sock.Create(8881))
+    {             
+             AfxMessageBox("创建网络失败！");
+    }
+    if(!m_sock.Connect("ip地址"),8881))
+    {
+        int nError=GetLastError();
+        AfxMessageBox("连接网络失败，请检查网络设备是否连通！");
+    }
+    提示：客户端只要执行connect方法，server端就接收到了
+    执行发送OnOK
+    CString str；
+    GetDlgItemText（IDC_INPUT,str）;
+    if(str.IsEmpty())
+    {
+         AfxMessageBox("不能发送空文字");return;
+    }
+    m_sock.Send(str,str.GetLength());
+
+    执行发送后，服务器端会立即接受到数据；
+
+
+3、获取主机信息
+     SInfo& info = m_info;
+     gethostname（info.sHost,sizeof(info.sHost)）
+     hostent* phost = gethostbyname(info.sHost)；//获取IP信息
+     in_add *ad=(in_add*)phost->h_addr;
+     strcpy(info.sIP,inet_ntoa(*ad));
+
+
+

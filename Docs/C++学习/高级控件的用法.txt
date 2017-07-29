@@ -1,0 +1,104 @@
+1、分页控件
+
+   a、 分别创建1个主对话框，3个分页对话框（属性中设置无标题栏，type是child），
+   b、在主对话框类中增加三个分页对话框的成员变量以及当前显示的分页对话框索引；
+   c、在主对话框中增加上一页、下一页、完成的按钮和对应的消息；
+   d、在主对话框的初始化消息中增加代码实现分页对话框显示的位置
+         代码如下：
+         m_p1.Create(IDD_PAGE1,this);
+         m_p2.Create(IDD_PAGE2,this);
+         m_p3.Create(IDD_PAGE3,this);
+         CRect rect,rt;
+         GetClientRect(rect);
+         GetDlgItem(IDOK)->GetWindowRect(rt);//屏幕坐标系
+         ScreenToClient(rt);
+         rect.bottom=rt.top;
+         m_p1.MoveWindow(rect);
+         m_p2.MoveWindow(rect);
+         m_p3.MoveWindow(rect);
+         //m_p1.ShowWindow(SW_SHOW);
+
+    e、主对话框中增加分页函数代码如下
+         void  CMainDlg::SelectPage()
+         {
+              CWnd* ps[]={&m_p1,&m_p2,&m_p3};
+              int i=0;
+              while(i<sizeof(ps)/sizeof(ps[0]))
+                    ps[i++]->ShowWinodw(i==m_nSel ? SW_SHOW : SW_HIDE);
+              GetDlgItem(IDOK)->EnableWindow(m_nSel != 2);
+              GetDlgItem(IDC_BACK)->EnableWindow(m_nSel);
+          }
+         在下一步消息函数中增加代码
+          ++m_nSel;
+          SelectPage();
+
+         在上一步消息函数中增加代码
+          --m_nSel;
+          SelectPage();
+       f、分页对话设置焦点
+            在主对话框中的onpaint函数中增加代码：
+            CWnd* ps[]={&m_p1,&m_p2,&m_p3};
+             ps[m_nSel]->SetFocus();
+
+       g、主对话框获取子对话框的成员变量数据，需要在
+            子对话框执行DoModal()之后可调用获取。 
+        前提：是在子窗口中控件变量声明成数值型变量，另外在分页对话框完成函数中增加
+       m_p1.Update();m_p2.Update();m_p3_update();将数据更新到对应的成员变量中
+
+2、CTabCtrl  标签控件
+
+      a、创建3个子对话框并添加三个成员变量，在初始化函数中需要代码实现增加标签
+          m_tab.InsertItem(0,“”);
+          m_tab.InsertItem(1,“”);
+          m_tab.InsertItem(2,“”);
+          //子对话框加入到主对话框中
+          m_p1.Createt(IDD_***,this);
+          m_p2.Createt(IDD_***,this);
+          m_p3.Createt(IDD_***,this);
+
+          CRect rect,rt;
+          m_tab.GetWindowRect(rect);
+          SceenToClient(rect);
+          
+          m_tab.GetItemRect(0,rt);
+          rect.top +=rt.Height;
+          rect.DeflateRect(3,3);//x,y 向右向下移动3像素;
+          m_p1.SetWindowRect(rect,FALSE);
+          m_p2.SetWindowRect(rect,FALSE);
+          m_p3.SetWindowRect(rect,FALSE);
+
+       b、对标签控件增加切换函数消息  onSelchangeTab
+            代码如下：
+           int nsel = m_tab.GetCurSel();
+           CWnd* ps[]={&m_p1,&m_p2,&m_p3};
+           int i=0;
+           while(i<sizeof(ps)/sizeof(ps[0]))
+           {
+                 ps[i++]->ShowWindow(i==nSel ? SW_SHOW : SW_HIDE);
+            }
+         c、点击确定后需要在onOK消息中
+            增加对m_p1,m_p2,m_p3调用Update（）函数，将数据更新到成员变量中。
+          
+3、CPropertySheet类是CWnd的派生类，功能和CDialog类似，但它可以实现tab切换功能
+       子窗口类创建时应选择CPropertyPage进行继承，其中标题栏不需要去掉，增加文本标题
+       a、弹出时的代码
+       CPropertySheet pSheet("标题文字",this);
+       CPage1 p1;
+       Cpage2 p2;
+       ...
+       pSheet.AddPage(&p1);
+       pSheet.AddPage(&p2);
+       ...
+       
+       pSheet.SetWizardMode();
+       pSheet.DoModal();
+         
+       b、在分页对话框类中增加SetActive消息函数，控制父窗口中上一步、下一步按钮的状态
+            注意在最后一个分页对话框中另外添加wizardFinish消息函数，在函数中增加update(）
+        CPropertySheet* cs = (CPropertySheet*)GetParent();
+        cs.SetWizardButtons(PSWIZB_BACK | PSWIZB_NEXT | PSWIZB_FINISH );//根据子窗口的显示顺序对按钮的可用控制
+             
+4、CTreeCtrl  树形控件
+     
+
+

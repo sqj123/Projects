@@ -1,0 +1,54 @@
+1、CMainView::OnInitiaUpdate()   相当于 对话框类中的InitDialog，初始化函数
+      新增ListView视图，代码如下所示：
+      CListCtrl & list = GetListCtrl();
+      list.ModifyStyle();
+      list.SetExtendedStyle(...)...
+
+      list.InsertColumn(...)
+      ....
+
+     注意：如果当前函数如果被调用两次，需要加入一下代码：
+     static int i=0；
+     if(i++) return;
+2、程序进口 InitInstance函数中对原有的loadFrame进行更改，增加灵活性
+      //pFrame=LoadFrame(IDR_MAINFRAME)；
+     更改为：
+    HICON hIcon=LoadIcon(IDT_MAINFRAME);
+     LPCSTR szClass=AfxRegisterWndClass(CS_DBCLKS|CS_VREDRAW|CS_HREDRAW,NULL,NULL,hIcon);
+     pFrame->Create(szClass,"标题文本",WS_OVERLAPPEDWINDOW,CFrameWnd::rectDefault,NULL,
+                      MAKEINYRESOURCE(IDR_MAINFRAME);
+     pFrame->SendMessageToDescendants(WM_INITIALUPDATE,0,0,TRUE,TRUE);//框架给所有子孙窗口发送消息
+
+3、MainFrame中有函数
+       OnSetFocus()
+      {
+       //设置焦点    
+      }
+      OnCmdMsg（）
+      {
+          //从框架给视图分发消息处理
+      }
+      OnCreateClient（）//创建客户区
+      { 
+           //在分割窗口中增加多个视图
+            m_split.CreateStatic(this,1,2);//m_split 作为框架的成员变量
+            m_split.CreateView(0,0,RUNTIME_CLASS(CLeftView),CSize(180,0),NULL);
+            m_split.CreateView(0,1,RUNTIME_CLASS(CRightView),CSize(0,0),NULL);
+            或
+            //在客户区里只含有一个视图
+           CCreateContext cc;
+           cc.m_pNewViewClass=RUNTIME_CLASS(CMainView);
+           m_pMainView=(CMainView*)CreateView(&cc);
+      }
+      OnInitiaUpdate()
+     {
+         //初始化当前wnd派生类中的控件
+     }
+4、视图中添加（CTreeCtrl  CListCtrl、CHtmlCtrl）控件
+      在视图中添加控件的成员变量，如CTreeCtrl& m_tree;
+      成员变量需要在构造函数中需要赋值，可以在构造函数的声明上加入：m_tree(GetTreeCtrl())
+
+5、框架、视图之间的通讯
+      1、需要在工程APP类中增加框架、视图的成员指针变量；
+      2、在框架、视图构造函数中对1中的几个成员变量赋值，theApp.m_mainFrame=this;...
+      3、这样就可以相互访问调用
