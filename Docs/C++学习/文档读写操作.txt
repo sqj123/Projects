@@ -1,4 +1,4 @@
-1、CFile 读写文档
+﻿1、CFile 读写文档
 
 2、CArchive 读写
       CArchive ar(&file,CArchive::store);
@@ -23,4 +23,4 @@
              AfxGetMainWnd（）->Serialize(ar);
       通过这句代码可以调用基类时会自动回调派生类函数，
       检测指针指向的对象的构造来源，谁构造的对象就调用谁的虚函数
-4、其他内容还在学习中...
+
